@@ -1,238 +1,224 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analog Saat</title>
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: 'Roboto', sans-serif;
-            transition: background-color 0.5s ease;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Analog Saat — Modern</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg-1:#eef2f7;
+      --bg-2:#e6ecf5;
+      --face:#ffffff;
+      --ring:#f1f5f9;
+      --tick:#cbd5e1;
+      --text:#0f172a;
+      --accent:#ef4444; /* saniye kolu */
+      --shadow:0 18px 45px rgba(0,0,0,.12), 0 6px 18px rgba(0,0,0,.10);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg-1:#0b1220;
+        --bg-2:#0f172a;
+        --face:#0f172a;
+        --ring:#0b1220;
+        --tick:#334155;
+        --text:#e2e8f0;
+        --accent:#fb7185;
+        --shadow:0 18px 45px rgba(0,0,0,.55), 0 6px 18px rgba(0,0,0,.45);
+      }
+    }
 
-        .clock-container {
-            position: relative;
-            width: 70vh;
-            height: 70vh;
-            max-width: 300px;
-            max-height: 300px;
-            border-radius: 50%;
-            background-color: #fff;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      display:grid;
+      place-items:center;
+      font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background: radial-gradient(60% 60% at 50% 25%, var(--bg-1), var(--bg-2));
+      transition: background 600ms ease;
+    }
 
-        .clock-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-        }
+    .wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+    }
 
-        .center-dot {
-            position: absolute;
-            width: 4%;
-            height: 4%;
-            background-color: #777;
-            border-radius: 50%;
-            z-index: 3;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
+    .clock{
+      position:relative;
+      width:min(90vmin, 520px);
+      aspect-ratio:1/1;
+      border-radius:50%;
+      background:var(--face);
+      box-shadow:var(--shadow);
+      isolation:isolate; /* overlay/kol katmanları için */
+    }
+    /* Çift halka — ince premium görünüm */
+    .clock::before, .clock::after{
+      content:"";
+      position:absolute; inset:14px;
+      border-radius:50%;
+      background:conic-gradient(from 0deg, #0000, #0001 8%, #0000 33%), radial-gradient(closest-side, #00000008, #0000 70%);
+      mix-blend-mode:multiply;
+    }
+    .clock::after{ inset:28px; background:radial-gradient(closest-side, var(--ring), #0000 75%); opacity:.85 }
 
-        .hour-hand {
-            position: absolute;
-            width: 3%;
-            height: 25%;
-            background-color: #333;
-            top: 50%;
-            left: 50%;
-            transform-origin: bottom;
-            transform: translate(-50%, -100%) rotate(0deg);
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            z-index: 2;
-        }
+    /* Rakamlar ve çizgiler için ortak başlangıç noktası */
+    .layer{ position:absolute; inset:0; }
 
-        .minute-hand {
-            position: absolute;
-            width: 2.5%;
-            height: 37.5%;
-            background-color: #555;
-            top: 50%;
-            left: 50%;
-            transform-origin: bottom;
-            transform: translate(-50%, -100%) rotate(0deg);
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            z-index: 2;
-        }
+    .number{
+      position:absolute;
+      width:48px; height:48px;
+      display:grid; place-items:center;
+      color:var(--text);
+      font-weight:600; font-size:clamp(14px, 2.4vmin, 22px);
+      transform:translate(-50%, -50%);
+      pointer-events:none;
+      text-shadow:0 1px 0 rgba(255,255,255,.2);
+    }
 
-        .second-hand {
-            position: absolute;
-            width: 1.5%;
-            height: 45%;
-            background-color: #f44336;
-            top: 50%;
-            left: 50%;
-            transform-origin: bottom;
-            transform: translate(-50%, -100%) rotate(0deg);
-            transition: transform 0.1s linear;
-            z-index: 1;
-        }
+    .tick{ position:absolute; width:3px; height:16px; background:var(--tick); border-radius:2px; transform-origin:50% 50%; opacity:.95 }
+    .tick.hour{ height:26px; width:4px; background:var(--text); opacity:.9 }
 
-        .number {
-            position: absolute;
-            font-size: 150%;
-            color: #333;
-        }
+    /* Kollar */
+    .hand{ position:absolute; left:50%; top:50%; transform:translate(-50%, -100%) rotate(0deg); transform-origin:50% 100%; }
+    .hand.hour{ width:10px; height:30%; background:linear-gradient(#0000 0 10%, #3b3b3b 10% 100%); border-radius:10px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.15)); }
+    .hand.minute{ width:8px; height:40%; background:linear-gradient(#0000 0 8%, #4b5563 8% 100%); border-radius:8px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.12)); }
+    .hand.second{ width:3px; height:45%; background:var(--accent); border-radius:3px; box-shadow:0 0 0 1px #00000010; }
 
-       .number1 {
-            top: 12%;
-            right: 26%;
-        }
-        .number2 {
-            top: 26%;
-            right: 12%;
-        }
-        .number3 {
-            top: 50%;
-            right: 2%;
-            transform: translateY(-50%);
-        }
-        .number4 {
-            bottom: 26%;
-            right: 12%;
-        }
-        .number5 {
-            bottom: 12%;
-            right: 26%;
-        }
-        .number6 {
-            bottom: 2%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .number7 {
-            bottom: 12%;
-            left: 26%;
-        }
-        .number8 {
-            bottom: 26%;
-            left: 12%;
-        }
-        .number9 {
-            top: 50%;
-            left: 2%;
-            transform: translateY(-50%);
-        }
-        .number10 {
-            top: 26%;
-            left: 12%;
-        }
-        .number11 {
-            top: 12%;
-            left: 26%;
-        }
-        .number12 {
-            top: 2%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
+    .cap{
+      position:absolute; left:50%; top:50%; translate:-50% -50%;
+      width:18px; height:18px; border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, #ffffff, #d4d4d4 55%, #8a8a8a);
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+      z-index:3;
+    }
 
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    /* Cam parıltısı */
+    .glass{
+      position:absolute; inset:0; border-radius:50%;
+      background:radial-gradient(120% 60% at 70% 10%, #ffffff30, #0000 40%), linear-gradient(180deg, #ffffff10, #0000 60%);
+      mix-blend-mode:screen; pointer-events:none; z-index:4;
+    }
+
+    .label{ color:var(--text); font-size:12px; opacity:.7; letter-spacing:.12em; text-transform:uppercase }
+  </style>
 </head>
 <body>
-    <div class="clock-container">
-        <div class="clock-face">
-            <div class="number number1">1</div>
-            <div class="number number2">2</div>
-            <div class="number number3">3</div>
-            <div class="number number4">4</div>
-            <div class="number number5">5</div>
-            <div class="number number6">6</div>
-            <div class="number number7">7</div>
-            <div class="number number8">8</div>
-            <div class="number number9">9</div>
-            <div class="number number10">10</div>
-            <div class="number number11">11</div>
-            <div class="number number12">12</div>
-            <div class="center-dot"></div>
-            <div class="hour-hand"></div>
-            <div class="minute-hand"></div>
-            <div class="second-hand"></div>
-        </div>
+  <div class="wrap">
+    <div class="clock" aria-label="Analog saat" role="img">
+      <div class="layer" id="ticks"></div>
+      <div class="layer" id="numbers"></div>
+
+      <div class="hand hour"   id="hour"></div>
+      <div class="hand minute" id="minute"></div>
+      <div class="hand second" id="second"></div>
+      <div class="cap"></div>
+      <div class="glass"></div>
     </div>
+    <div class="label" id="a11yTime" aria-live="polite"></div>
+  </div>
 
-    <script>
-        const hourHand = document.querySelector('.hour-hand');
-        const minuteHand = document.querySelector('.minute-hand');
-        const secondHand = document.querySelector('.second-hand');
+  <script>
+    // —— Bug Fix Note ——
+    // Eski sürümünüzde 'colors' diye bir değişken kullanılıyor ama dizinin adı 'lighterColors' idi.
+    // Bu ReferenceError yüzünden saat hiç çalışmıyordu. Aşağıda hem isim uyumu sağlandı hem de
+    // daha şık bir arka plan geçişi için bu renkler bir gradyan olarak kullanılıyor.
 
-const lighterColors = [
-    '#FF6347', // light red (from koyu kırmızı)
-    '#DDA0DD', // light pink (from koyu pembe)
-    '#F0E68C', // light khaki (from koyu bej/sarımsı)
-    '#A9A9A9', // light gray (from koyu gri)
-    '#87CEFA', // light steel blue (from çelik mavisi)
-    '#66CDAA', // medium turquoise (from koyu camgöbeği)
-    '#FFD700', // gold (from koyu altın)
-    '#FFA07A', // light salmon (from koyu şeftali)
-    '#D8BFD8', // thistle (from orta koyu mor)
-    '#87CEFA', // light steel blue (from çelik mavisi)
-    '#C5A28B', // light brown (from koyu kahverengi)
-    '#D2691E', // chocolate (from çikolata kahvesi)
-    '#CD5C5C', // indian red (from kestane)
-    '#A0522D', // chestnut (from koyu bakır)
-    '#6F4F37', // brown (from derin kahve)
-    '#A52A2A', // brown (from çok koyu kahve)
-    '#C6A57C', // tan (from klasik koyu kahverengi)
-    '#7B68EE', // medium slate blue (from arduvaz mavi)
-    '#B0C4DE', // light steel blue (from gri mavi)
-    '#9ACD32', // yellow green (from koyu zeytin yeşili)
-    '#CD853F'  // peru (from koyu bronz)
-];
+    const colors = [
+      '#FF6347', '#DDA0DD', '#F0E68C', '#A9A9A9', '#87CEFA', '#66CDAA', '#FFD700', '#FFA07A',
+      '#D8BFD8', '#87CEFA', '#C5A28B', '#D2691E', '#CD5C5C', '#A0522D', '#6F4F37', '#A52A2A',
+      '#C6A57C', '#7B68EE', '#B0C4DE', '#9ACD32', '#CD853F'
+    ];
 
+    const clock   = document.querySelector('.clock');
+    const ticksEl = document.getElementById('ticks');
+    const numsEl  = document.getElementById('numbers');
 
-        let colorIndex = 0;
+    const hourHand   = document.getElementById('hour');
+    const minuteHand = document.getElementById('minute');
+    const secondHand = document.getElementById('second');
+    const a11yTime   = document.getElementById('a11yTime');
 
-        function updateClock() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
+    // 60 çizgi (her 5.'si kalın saat çizgisi)
+    const R_TICK = 46; // yüzde (merkezden)
+    for(let i=0;i<60;i++){
+      const tick = document.createElement('div');
+      tick.className = 'tick' + (i%5===0 ? ' hour' : '');
+      const angle = i * 6; // derece
+      const rad = angle * Math.PI / 180;
+      const x = 50 + R_TICK * Math.sin(rad);
+      const y = 50 - R_TICK * Math.cos(rad);
+      tick.style.left = x + '%';
+      tick.style.top  = y + '%';
+      tick.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+      ticksEl.appendChild(tick);
+    }
 
-            const hourRotation = (hours % 12 + minutes / 60) * 30;
-            const minuteRotation = (minutes + seconds / 60) * 6;
-            const secondRotation = seconds * 6;
+    // 12 rakam
+    const R_NUM = 39;
+    for(let i=1;i<=12;i++){
+      const n = document.createElement('div');
+      n.className = 'number';
+      n.textContent = i;
+      const angle = i * 30; // derece
+      const rad = angle * Math.PI / 180;
+      const x = 50 + R_NUM * Math.sin(rad);
+      const y = 50 - R_NUM * Math.cos(rad);
+      n.style.left = x + '%';
+      n.style.top  = y + '%';
+      numsEl.appendChild(n);
+    }
 
-            hourHand.style.transform = `translate(-50%, -100%) rotate(${hourRotation}deg)`;
-            minuteHand.style.transform = `translate(-50%, -100%) rotate(${minuteRotation}deg)`;
-            secondHand.style.transform = `translate(-50%, -100%) rotate(${secondRotation}deg)`;
+    // Sürekli akış (sıçrama yok): requestAnimationFrame ile akıcı hareket
+    function tick(){
+      const now = new Date();
+      const ms = now.getMilliseconds();
+      const s  = now.getSeconds() + ms/1000;
+      const m  = now.getMinutes() + s/60;
+      const h  = (now.getHours() % 12) + m/60;
 
-            // Arka plan rengini değiştir
-            colorIndex = minutes % colors.length;
-            document.body.style.backgroundColor = colors[colorIndex];
-        }
+      const sDeg = s * 6;      // 360/60
+      const mDeg = m * 6;
+      const hDeg = h * 30;     // 360/12
 
-        updateClock();
-        setInterval(updateClock, 1000);
+      hourHand.style.transform   = `translate(-50%,-100%) rotate(${hDeg}deg)`;
+      minuteHand.style.transform = `translate(-50%,-100%) rotate(${mDeg}deg)`;
+      secondHand.style.transform = `translate(-50%,-100%) rotate(${sDeg}deg)`;
 
-        // Ekran boyutu değiştikçe saati yeniden boyutlandır
-        window.addEventListener('resize', () => {
-            const clockContainer = document.querySelector('.clock-container');
-            const newSize = Math.min(window.innerHeight, window.innerWidth) * 0.7;
-            clockContainer.style.width = `${newSize}px`;
-            clockContainer.style.height = `${newSize}px`;
-        });
-    </script>
+      // Erişilebilirlik için dijital metin
+      a11yTime.textContent = now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+      // Arka plan: dakika bazlı yumuşak geçiş (iki komşu rengi harmanla)
+      const cIndex = Math.floor(m) % colors.length;
+      const nextIndex = (cIndex + 1) % colors.length;
+      const t = (s % 60) / 60; // 0..1
+      const c1 = colors[cIndex];
+      const c2 = colors[nextIndex];
+      document.body.style.background = `radial-gradient(60% 60% at 50% 25%, ${mix(c1,c2,t)}, var(--bg-2))`;
+
+      requestAnimationFrame(tick);
+    }
+
+    // HEX renk karıştırma
+    function mix(hex1, hex2, t){
+      const a = hexToRgb(hex1), b = hexToRgb(hex2);
+      const m = {
+        r: Math.round(a.r + (b.r - a.r) * t),
+        g: Math.round(a.g + (b.g - a.g) * t),
+        b: Math.round(a.b + (b.b - a.b) * t),
+      };
+      return `rgb(${m.r}, ${m.g}, ${m.b})`;
+    }
+    function hexToRgb(hex){
+      const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:255,g:255,b:255};
+    }
+
+    requestAnimationFrame(tick);
+  </script>
 </body>
 </html>
