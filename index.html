@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Minimalist, modern analog saat. Dinamik arka plan renkleri ve koyu mod destegi." />
+  <meta name="theme-color" content="#eef2f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
+  <meta property="og:title" content="Analog Saat — Modern" />
+  <meta property="og:description" content="Minimalist, modern analog saat." />
+  <meta property="og:type" content="website" />
   <title>Analog Saat — Modern</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F554;</text></svg>" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root{
@@ -14,6 +21,8 @@
       --tick:#cbd5e1;
       --text:#0f172a;
       --accent:#ef4444; /* saniye kolu */
+      --hand-hour:#3b3b3b;
+      --hand-minute:#4b5563;
       --shadow:0 18px 45px rgba(0,0,0,.12), 0 6px 18px rgba(0,0,0,.10);
     }
     @media (prefers-color-scheme: dark){
@@ -25,6 +34,8 @@
         --tick:#334155;
         --text:#e2e8f0;
         --accent:#fb7185;
+        --hand-hour:#cbd5e1;
+        --hand-minute:#94a3b8;
         --shadow:0 18px 45px rgba(0,0,0,.55), 0 6px 18px rgba(0,0,0,.45);
       }
     }
@@ -54,8 +65,10 @@
       border-radius:50%;
       background:var(--face);
       box-shadow:var(--shadow);
-      isolation:isolate; /* overlay/kol katmanları için */
+      isolation:isolate;
+      transition:transform 300ms ease;
     }
+    .clock:hover{ transform:scale(1.02); }
     /* Çift halka — ince premium görünüm */
     .clock::before, .clock::after{
       content:"";
@@ -85,8 +98,8 @@
 
     /* Kollar */
     .hand{ position:absolute; left:50%; top:50%; transform:translate(-50%, -100%) rotate(0deg); transform-origin:50% 100%; }
-    .hand.hour{ width:10px; height:30%; background:linear-gradient(#0000 0 10%, #3b3b3b 10% 100%); border-radius:10px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.15)); }
-    .hand.minute{ width:8px; height:40%; background:linear-gradient(#0000 0 8%, #4b5563 8% 100%); border-radius:8px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.12)); }
+    .hand.hour{ width:10px; height:30%; background:linear-gradient(#0000 0 10%, var(--hand-hour) 10% 100%); border-radius:10px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.15)); transition:background 300ms; }
+    .hand.minute{ width:8px; height:40%; background:linear-gradient(#0000 0 8%, var(--hand-minute) 8% 100%); border-radius:8px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.12)); transition:background 300ms; }
     .hand.second{ width:3px; height:45%; background:var(--accent); border-radius:3px; box-shadow:0 0 0 1px #00000010; }
 
     .cap{
@@ -104,7 +117,28 @@
       mix-blend-mode:screen; pointer-events:none; z-index:4;
     }
 
-    .label{ color:var(--text); font-size:12px; opacity:.7; letter-spacing:.12em; text-transform:uppercase }
+    .info{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+    }
+    .time-display{
+      color:var(--text);
+      font-size:clamp(18px, 3vmin, 28px);
+      font-weight:500;
+      font-variant-numeric:tabular-nums;
+      letter-spacing:.05em;
+      opacity:.85;
+    }
+    .date-display{
+      color:var(--text);
+      font-size:clamp(11px, 1.6vmin, 14px);
+      opacity:.5;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+
   </style>
 </head>
 <body>
@@ -119,19 +153,18 @@
       <div class="cap"></div>
       <div class="glass"></div>
     </div>
-    <div class="label" id="a11yTime" aria-live="polite"></div>
+    <div class="info">
+      <div class="time-display" id="a11yTime" aria-live="polite"></div>
+      <div class="date-display" id="dateDisplay"></div>
+    </div>
   </div>
 
   <script>
-    // —— Bug Fix Note ——
-    // Eski sürümünüzde 'colors' diye bir değişken kullanılıyor ama dizinin adı 'lighterColors' idi.
-    // Bu ReferenceError yüzünden saat hiç çalışmıyordu. Aşağıda hem isim uyumu sağlandı hem de
-    // daha şık bir arka plan geçişi için bu renkler bir gradyan olarak kullanılıyor.
-
     const colors = [
-      '#FF6347', '#DDA0DD', '#F0E68C', '#A9A9A9', '#87CEFA', '#66CDAA', '#FFD700', '#FFA07A',
-      '#D8BFD8', '#87CEFA', '#C5A28B', '#D2691E', '#CD5C5C', '#A0522D', '#6F4F37', '#A52A2A',
-      '#C6A57C', '#7B68EE', '#B0C4DE', '#9ACD32', '#CD853F'
+      '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399',
+      '#22d3ee', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc',
+      '#e879f9', '#f472b6', '#fb7185', '#f97316', '#eab308',
+      '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1'
     ];
 
     const clock   = document.querySelector('.clock');
@@ -142,6 +175,7 @@
     const minuteHand = document.getElementById('minute');
     const secondHand = document.getElementById('second');
     const a11yTime   = document.getElementById('a11yTime');
+    const dateDisplay = document.getElementById('dateDisplay');
 
     // 60 çizgi (her 5.'si kalın saat çizgisi)
     const R_TICK = 46; // yüzde (merkezden)
@@ -189,8 +223,9 @@
       minuteHand.style.transform = `translate(-50%,-100%) rotate(${mDeg}deg)`;
       secondHand.style.transform = `translate(-50%,-100%) rotate(${sDeg}deg)`;
 
-      // Erişilebilirlik için dijital metin
+      // Dijital saat ve tarih
       a11yTime.textContent = now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      dateDisplay.textContent = now.toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
       // Arka plan: dakika bazlı yumuşak geçiş (iki komşu rengi harmanla)
       const cIndex = Math.floor(m) % colors.length;
